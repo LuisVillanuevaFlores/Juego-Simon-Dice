@@ -82,6 +82,10 @@
       .hide {
         display: none;
       }
+
+      * {
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+      }
     </style>
   </head>
   <body>
@@ -92,24 +96,43 @@
       <div id="verde" class="color verde right" data-color="verde"></div>
       <button id="btnEmpezar" class="btn-start" onclick="empezarJuego()">Empezar a jugar!</button>
     </div>
+
+    <section class="sound__secuencia">
+      <audio id="sound_do" src="./sounds/sound_do.wav"></audio>
+      <audio id="sound_fa" src="./sounds/sound_fa.wav"></audio>
+      <audio id="sound_mi" src="./sounds/sound_mi.wav"></audio>
+      <audio id="sound_sol" src="./sounds/sound_sol.wav"></audio>
+  </section>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
     <script>
-      var btnEmpezar=document.getElementById('btnEmpezar');
-      var celeste= document.getElementById('celeste');
-      var violeta= document.getElementById('violeta');
-      var naranja= document.getElementById('naranja');
-      var verde= document.getElementById('verde');
-      var ULTIMO_NIVEL=10;
+      const btnEmpezar=document.getElementById('btnEmpezar');
+      const celeste= document.getElementById('celeste');
+      const violeta= document.getElementById('violeta');
+      const naranja= document.getElementById('naranja');
+      const verde= document.getElementById('verde');
+
+      //////////SONIDOS//////////
+      const sound_do = document.getElementById('sound_do')
+      const sound_mi = document.getElementById('sound_mi')
+      const sound_fa = document.getElementById('sound_fa')
+      const sound_sol = document.getElementById('sound_sol')
+      
+      const ULTIMO_NIVEL=5;
+      
       class Juego{
         constructor(){
-
-        
+          this.inicializar =this.inicializar.bind(this);
           this.inicializar();
           this.generarSecuencia();
-          setTimeout(this.siguientenivel.bind(this),1500);
+          setTimeout(this.siguientenivel,1000);
           
         }
         inicializar(){
-          btnEmpezar.classList.add('hide');
+          this.siguientenivel =this.siguientenivel.bind(this);
+          this.elegirColor =this.elegirColor.bind(this);
+          this.toggleBtnEmpezar();
+          
           this.nivel=1;
           this.colores={
             celeste,
@@ -117,10 +140,25 @@
             naranja,
             verde
           }
+
+          this.sounds={
+            sound_do,
+            sound_fa,
+            sound_mi,
+            sound_sol
+
+          }
+        }
+        toggleBtnEmpezar(){
+          if (btnEmpezar.classList.contains('hide')){
+            btnEmpezar.classList.remove('hide');
+          }else{
+            btnEmpezar.classList.add('hide');
+          }
         }
      
         generarSecuencia(){
-          this.secuencia= new Array(10).fill(0).map(
+          this.secuencia= new Array(ULTIMO_NIVEL).fill(0).map(
             function(n){
               return Math.floor(Math.random()*4);
             }
@@ -171,10 +209,37 @@
           }
         }
 
+        playSound(color){
+          switch (color) {
+            case 'celeste':
+              
+              this.sounds.sound_do.play() ;
+              break;
+            
+            case 'violeta':
+              this.sounds.sound_sol.play();
+              break;
+            
+            case 'naranja':
+               this.sounds.sound_fa.play();
+               break;
+
+            case 'verde':
+              this.sounds.sound_mi.play();
+              break;
+          
+           
+          }
+        }
+
         iluminarSecuencia(){
           for(let i=0;i<this.nivel;i++){
             const color= this.transformarColor(this.secuencia[i]);
-            setTimeout(()=>this.iluminarcolor(color), 1000*i)
+            setTimeout(()=>{
+              this.iluminarcolor(color)
+              this.playSound(color)
+            }, 1000*i)
+            //setTimeout(()=>this.playSound(color), 1000*i)
           }
 
         }
@@ -201,18 +266,18 @@
         }
 
         agregareventoclick(){
-          this.colores.celeste.addEventListener('click', this.elegirColor.bind(this));
-          this.colores.violeta.addEventListener('click', this.elegirColor.bind(this));
-          this.colores.naranja.addEventListener('click', this.elegirColor.bind(this));
-          this.colores.verde.addEventListener('click', this.elegirColor.bind(this));
+          this.colores.celeste.addEventListener('click', this.elegirColor);
+          this.colores.violeta.addEventListener('click', this.elegirColor);
+          this.colores.naranja.addEventListener('click', this.elegirColor);
+          this.colores.verde.addEventListener('click', this.elegirColor);
 
         }
 
         eliminarEventosClick(){
-          this.colores.celeste.removeEventListener('click', this.elegirColor.bind(this));
-          this.colores.violeta.removeEventListener('click', this.elegirColor.bind(this));
-          this.colores.naranja.removeEventListener('click', this.elegirColor.bind(this));
-          this.colores.verde.removeEventListener('click', this.elegirColor.bind(this));
+          this.colores.celeste.removeEventListener('click', this.elegirColor);
+          this.colores.violeta.removeEventListener('click', this.elegirColor);
+          this.colores.naranja.removeEventListener('click', this.elegirColor);
+          this.colores.verde.removeEventListener('click', this.elegirColor);
 
         }
 
@@ -220,28 +285,43 @@
           const nombreColor= ev.target.dataset.color;
           const numeroColor= this.transformaraNum(nombreColor);
           this.iluminarcolor(nombreColor);
+          this.playSound(nombreColor);
           if(numeroColor===this.secuencia[this.subnivel]){
             this.subnivel++;
             if(this.subnivel===this.nivel){
               this.nivel++;
-
               this.eliminarEventosClick()
-              if(this.nivel===ULTIMO_NIVEL+1){
-                //GANO
+              if(this.nivel===(ULTIMO_NIVEL+1)){
+                this.ganoElJuego();
               }else{
-                setTimeout(this.siguientenivel.bind(this),1500) 
+                setTimeout(this.siguientenivel,1500) 
               }
             }
-
-          }else{
-            //Perdio
+            
+          }
+          else{
+            this.perdioElJuego();
           }
 
         }
         
-      }
       
+      
+      ganoElJuego(){
+        swal('Geniaal!', 'Felicidades, ganaste el juego!','success')
+        .then(()=>this.inicializar())
+      }
 
+      perdioElJuego(){
+        swal('Eres basura Brock!', 'Lamentable, perdiste el juego!','error')
+        .then(()=>{
+          this.eliminarEventosClick();
+          this.inicializar();
+          
+        })
+      }
+
+    }
 
       function empezarJuego(){
         window.juego= new Juego();
